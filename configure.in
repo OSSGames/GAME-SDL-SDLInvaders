@@ -1,0 +1,54 @@
+AC_INIT(src/main.c)
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(SDLInvaders,0.8.0)
+AC_PROG_CC
+AC_PROG_INSTALL
+
+AM_MAINTAINER_MODE
+
+AC_ARG_ENABLE(debug,
+[  --enable-debug       enable debug mode [default=no]],
+                ,enable_debug=no)
+if test x$enable_debug = xyes; then
+  if test x$ac_cv_prog_cc_g = xyes; then
+    CFLAGS="-g -O0"
+  else
+    CFLAGS="-O0"
+  fi
+  CFLAGS="$CFLAGS -Wall -ansi -pedantic"
+fi
+
+dnl Check for SDL
+SDL_VERSION=1.0.1
+AM_PATH_SDL($SDL_VERSION,
+		:,
+		AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!])
+)
+CFLAGS="$CFLAGS $SDL_CFLAGS"
+LIBS="$LIBS $SDL_LIBS"
+
+dnl Check for SDL_Image
+AC_CHECK_LIB(SDL_image,
+	IMG_Load,
+	LIBS="$LIBS -lSDL_image",
+	AC_MSG_ERROR([*** SDL_image library not found!])
+)
+
+dnl Check if we want sound (default=yes)
+AC_ARG_ENABLE(sound,
+[  --enable-sound       enable sound support [default=yes]],
+		,enable_sound=yes)
+if test x$enable_sound = xyes; then
+  dnl Check for SDL_Mixer
+  AC_CHECK_LIB(SDL_mixer,
+	Mix_OpenAudio,
+	LIBS="$LIBS -lSDL_mixer",
+	AC_MSG_ERROR([*** SDL_mixer library not found!])
+  )
+else
+  CFLAGS="$CFLAGS -DNOSOUND"  
+fi
+
+
+AC_PROG_INSTALL
+AC_OUTPUT(Makefile src/Makefile data/Makefile)
